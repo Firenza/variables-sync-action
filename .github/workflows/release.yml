@@ -35,7 +35,7 @@ jobs:
         REPOSITORIES: |
           ^Firenza/verify-secrets$
         DRY_RUN: true
-        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        GITHUB_TOKEN: ${{ secrets.GH_TOKEN_NO_SCOPES }}
       env:
         FOO: ${{github.run_id}}
         FOOBAR: BAZ
@@ -44,7 +44,7 @@ jobs:
       uses: actions/checkout@v3
       with:
         ref: master 
-
+        
     - name: Semantic Release
       run: |
         npm ci
