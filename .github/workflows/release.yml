@@ -7,9 +7,10 @@ jobs:
   build:
     runs-on: ubuntu-latest
     steps:
-    - uses: actions/checkout@v2
+    - uses: actions/checkout@v3
       with: 
         ref: 'master'
+
     - name: Keep dist up-to-date
       run: |
         npm i
@@ -20,26 +21,30 @@ jobs:
         git add dist/index.js
         git commit -m "chore: publish dist" || echo "nothing to commit"
         git push origin master
-    - uses: actions/checkout@v2
+
+    - uses: actions/checkout@v3
       with:
         ref: master
+        
     - name: Test Action
       uses: ./
       with: 
-        SECRETS: |
+        VARIABLES: |
           ^FOO$
           ^GITHUB_.*
         REPOSITORIES: |
-          ^jpoehnelt/nodelete$
+          ^Firenza/verify-secrets$
         DRY_RUN: true
-        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN_NO_SCOPES }}
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       env:
         FOO: ${{github.run_id}}
         FOOBAR: BAZ
+
     - name: Checkout
-      uses: actions/checkout@v2
+      uses: actions/checkout@v3
       with:
         ref: master 
+
     - name: Semantic Release
       run: |
         npm ci
