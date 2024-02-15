@@ -16,7 +16,7 @@
 
 import * as config from "../src/config";
 import * as github from "../src/github";
-import * as secrets from "../src/secrets";
+import * as variables from "../src/variables";
 
 // @ts-ignore-next-line
 import fixture from "@octokit/fixtures/scenarios/api.github.com/get-repository/normalized-fixture.json";
@@ -27,16 +27,16 @@ nock.disableNetConnect();
 
 beforeEach(() => {});
 
-test("run should succeed with a repo and secret", async () => {
+test("run should succeed with a repo and variable", async () => {
   (github.listAllMatchingRepos as jest.Mock) = jest
     .fn()
     .mockImplementation(async () => [fixture[0].response]);
 
-  (github.setSecretForRepo as jest.Mock) = jest
+  (github.setVariableForRepo as jest.Mock) = jest
     .fn()
     .mockImplementation(async () => null);
 
-  (secrets.getSecrets as jest.Mock) = jest.fn().mockReturnValue({
+  (variables.getVariables as jest.Mock) = jest.fn().mockReturnValue({
     BAZ: "bar",
   });
 
@@ -53,23 +53,23 @@ test("run should succeed with a repo and secret", async () => {
   await run();
 
   expect(github.listAllMatchingRepos as jest.Mock).toBeCalledTimes(1);
-  expect((github.setSecretForRepo as jest.Mock).mock.calls[0][3]).toEqual(
+  expect((github.setVariableForRepo as jest.Mock).mock.calls[0][3]).toEqual(
     fixture[0].response
   );
 
   expect(process.exitCode).toBe(undefined);
 });
 
-test("run should succeed with a repo and secret with repository_list_regex as false", async () => {
+test("run should succeed with a repo and variable with repository_list_regex as false", async () => {
   (github.getRepos as jest.Mock) = jest
     .fn()
     .mockImplementation(async () => [fixture[0].response]);
 
-  (github.setSecretForRepo as jest.Mock) = jest
+  (github.setVariableForRepo as jest.Mock) = jest
     .fn()
     .mockImplementation(async () => null);
 
-  (secrets.getSecrets as jest.Mock) = jest.fn().mockReturnValue({
+  (variables.getVariables as jest.Mock) = jest.fn().mockReturnValue({
     BAZ: "bar",
   });
 
@@ -85,15 +85,15 @@ test("run should succeed with a repo and secret with repository_list_regex as fa
   await run();
 
   expect(github.getRepos as jest.Mock).toBeCalledTimes(1);
-  expect((github.setSecretForRepo as jest.Mock).mock.calls[0][3]).toEqual(
+  expect((github.setVariableForRepo as jest.Mock).mock.calls[0][3]).toEqual(
     fixture[0].response
   );
 
   expect(process.exitCode).toBe(undefined);
 });
 
-test("run should succeed with delete enabled, a repo and secret with repository_list_regex as false", async () => {
-  (github.deleteSecretForRepo as jest.Mock) = jest
+test("run should succeed with delete enabled, a repo and variable with repository_list_regex as false", async () => {
+  (github.deleteVariableForRepo as jest.Mock) = jest
     .fn()
     .mockImplementation(async () => null);
 
@@ -109,33 +109,6 @@ test("run should succeed with delete enabled, a repo and secret with repository_
   });
   await run();
 
-  expect(github.deleteSecretForRepo as jest.Mock).toBeCalledTimes(1);
+  expect(github.deleteVariableForRepo as jest.Mock).toBeCalledTimes(1);
   expect(process.exitCode).toBe(undefined);
-});
-
-test("run should fail if target is not supported", async () => {
-  (github.getRepos as jest.Mock) = jest
-    .fn()
-    .mockImplementation(async () => [fixture[0].response]);
-
-  (github.setSecretForRepo as jest.Mock) = jest
-    .fn()
-    .mockImplementation(async () => null);
-
-  (secrets.getSecrets as jest.Mock) = jest.fn().mockReturnValue({
-    BAZ: "bar",
-  });
-
-  (config.getConfig as jest.Mock) = jest.fn().mockReturnValue({
-    GITHUB_TOKEN: "token",
-    SECRETS: ["BAZ"],
-    REPOSITORIES: [fixture[0].response.full_name],
-    REPOSITORIES_LIST_REGEX: false,
-    DRY_RUN: false,
-    CONCURRENCY: 1,
-    TARGET: "invalid",
-  });
-  await run();
-
-  expect(process.exitCode).toBe(1);
 });

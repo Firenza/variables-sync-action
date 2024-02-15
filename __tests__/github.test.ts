@@ -21,9 +21,8 @@ import {
   filterReposByPatterns,
   listAllMatchingRepos,
   getRepos,
-  publicKeyCache,
-  setSecretForRepo,
-  deleteSecretForRepo,
+  setVariableForRepo,
+  deleteVariableForRepo,
 } from "../src/github";
 
 // @ts-ignore-next-line
@@ -36,7 +35,7 @@ beforeAll(() => {
   nock.disableNetConnect();
   (config.getConfig as jest.Mock) = jest.fn().mockReturnValue({
     GITHUB_TOKEN: "token",
-    SECRETS: ["BAZ"],
+    VARIABLES: ["BAZ"],
     REPOSITORIES: [".*"],
     REPOSITORIES_LIST_REGEX: true,
     DRY_RUN: false,
@@ -69,23 +68,35 @@ describe("listing repos from github", () => {
   });
 
   test("listAllReposForAuthenticatedUser returns from multiple pages", async () => {
-    const repos = await listAllMatchingRepos({
-      patterns: [".*"],
-      octokit,
-      pageSize,
-    });
+    try {
+      const repos = await listAllMatchingRepos({
+        patterns: [".*"],
+        octokit,
+        pageSize,
+      });
 
-    expect(repos.length).toEqual(3);
+      expect(repos.length).toEqual(3);
+    } catch (error) {
+      // Catch any errors from misconfigure nock mocks
+      console.log(error);
+      throw error;
+    }
   });
 
   test("listAllReposForAuthenticatedUser matches patterns", async () => {
-    const repos = await listAllMatchingRepos({
-      patterns: ["octokit.*"],
-      octokit,
-      pageSize,
-    });
+    try {
+      const repos = await listAllMatchingRepos({
+        patterns: ["octokit.*"],
+        octokit,
+        pageSize,
+      });
 
-    expect(repos.length).toEqual(3);
+      expect(repos.length).toEqual(3);
+    } catch (error) {
+      // Catch any errors from misconfigure nock mocks
+      console.log(error);
+      throw error;
+    }
   });
 });
 
@@ -102,16 +113,22 @@ describe("getting single repos from github", () => {
   });
 
   test("getRepos returns from multiple pages", async () => {
-    const repos = await getRepos({
-      patterns: [
-        fixture[0].response.full_name,
-        fixture[0].response.full_name,
-        fixture[0].response.full_name,
-      ],
-      octokit,
-    });
+    try {
+      const repos = await getRepos({
+        patterns: [
+          fixture[0].response.full_name,
+          fixture[0].response.full_name,
+          fixture[0].response.full_name,
+        ],
+        octokit,
+      });
 
-    expect(repos.length).toEqual(3);
+      expect(repos.length).toEqual(3);
+    } catch (error) {
+      // Catch any errors from misconfigure nock mocks
+      console.log(error);
+      throw error;
+    }
   });
 });
 
@@ -120,276 +137,295 @@ test("filterReposByPatterns matches patterns", async () => {
   expect(filterReposByPatterns([fixture[0].response], ["nope"]).length).toBe(0);
 });
 
-describe("setSecretForRepo", () => {
+describe("setVariableForRepo", () => {
   const repo = fixture[0].response;
-  const publicKey = {
-    key_id: "1234",
-    key: "HRkzRZD1+duhfvNvY8eiCPb+ihIjbvkvRyiehJCs8Vc=",
-  };
+  const [repo_owner, repo_name] = repo.full_name.split("/");
 
   jest.setTimeout(30000);
 
-  const secrets = { FOO: "BAR" };
+  const variables = { FOO: "BAR" };
 
-  const repoEnvironment = "production";
-
-  let actionsPublicKeyMock: nock.Scope;
-  let dependabotPublicKeyMock: nock.Scope;
-  let setActionsSecretMock: nock.Scope;
-  let setDependabotSecretMock: nock.Scope;
+  let createVariableMock: nock.Scope;
+  let updateVariableMock: nock.Scope;
 
   beforeEach(() => {
     nock.cleanAll();
 
-    publicKeyCache.clear();
-
-    actionsPublicKeyMock = nock("https://api.github.com")
-      .get(`/repos/${repo.full_name}/actions/secrets/public-key`)
-      .reply(200, publicKey);
-
-    dependabotPublicKeyMock = nock("https://api.github.com")
-      .get(`/repos/${repo.full_name}/dependabot/secrets/public-key`)
-      .reply(200, publicKey);
-
-    setActionsSecretMock = nock("https://api.github.com")
-      .put(`/repos/${repo.full_name}/actions/secrets/FOO`, (body) => {
-        expect(body.encrypted_value).toBeTruthy();
-        expect(body.key_id).toEqual(publicKey.key_id);
-        return body;
-      })
-      .reply(200);
-
-    setDependabotSecretMock = nock("https://api.github.com")
-      .put(`/repos/${repo.full_name}/dependabot/secrets/FOO`, (body) => {
-        expect(body.encrypted_value).toBeTruthy();
-        expect(body.key_id).toEqual(publicKey.key_id);
-        return body;
-      })
-      .reply(200);
-  });
-
-  test("setSecretForRepo with Actions target should retrieve public key for Actions", async () => {
-    await setSecretForRepo(
-      octokit,
-      "FOO",
-      secrets.FOO,
-      repo,
-      "",
-      true,
-      "actions"
-    );
-    expect(actionsPublicKeyMock.isDone()).toBeTruthy();
-  });
-
-  test("setSecretForRepo with Dependabot target should retrieve public key for Dependabot", async () => {
-    await setSecretForRepo(
-      octokit,
-      "FOO",
-      secrets.FOO,
-      repo,
-      "",
-      true,
-      "dependabot"
-    );
-    expect(dependabotPublicKeyMock.isDone()).toBeTruthy();
-  });
-
-  test("setSecretForRepo should not set secret with dry run", async () => {
-    await setSecretForRepo(
-      octokit,
-      "FOO",
-      secrets.FOO,
-      repo,
-      "",
-      true,
-      "actions"
-    );
-    expect(actionsPublicKeyMock.isDone()).toBeTruthy();
-    expect(setActionsSecretMock.isDone()).toBeFalsy();
-  });
-
-  test("setSecretForRepo with Actions target should call set secret endpoint for Actions", async () => {
-    await setSecretForRepo(
-      octokit,
-      "FOO",
-      secrets.FOO,
-      repo,
-      "",
-      false,
-      "actions"
-    );
-    expect(setActionsSecretMock.isDone()).toBeTruthy();
-  });
-
-  test("setSecretForRepo with Dependabot target should call set secret endpoint for Dependabot", async () => {
-    await setSecretForRepo(
-      octokit,
-      "FOO",
-      secrets.FOO,
-      repo,
-      "",
-      false,
-      "dependabot"
-    );
-    expect(setDependabotSecretMock.isDone()).toBeTruthy();
-  });
-});
-
-describe("setSecretForRepo with environment", () => {
-  const repo = fixture[0].response;
-  const publicKey = {
-    key_id: "1234",
-    key: "HRkzRZD1+duhfvNvY8eiCPb+ihIjbvkvRyiehJCs8Vc=",
-  };
-
-  jest.setTimeout(30000);
-
-  const secrets = { FOO: "BAR" };
-
-  const repoEnvironment = "production";
-
-  let environmentPublicKeyMock: nock.Scope;
-  let setEnvironmentSecretMock: nock.Scope;
-
-  beforeEach(() => {
-    nock.cleanAll();
-    publicKeyCache.clear();
-
-    environmentPublicKeyMock = nock("https://api.github.com")
-      .get(
-        `/repositories/${repo.id}/environments/${repoEnvironment}/secrets/public-key`
-      )
-      .reply(200, publicKey);
-
-    setEnvironmentSecretMock = nock("https://api.github.com")
-      .put(
-        `/repositories/${repo.id}/environments/${repoEnvironment}/secrets/FOO`,
+    createVariableMock = nock("https://api.github.com")
+      .post(
+        `/repos/${repo_owner}/${repo_name}/actions/variables/${
+          Object.keys(variables)[0]
+        }`,
         (body) => {
-          expect(body.encrypted_value).toBeTruthy();
-          expect(body.key_id).toEqual(publicKey.key_id);
+          expect(body.name).toBe(Object.keys(variables)[0]);
+          expect(body.value).toBe(Object.values(variables)[0]);
+          return body;
+        }
+      )
+      .reply(200);
+
+    updateVariableMock = nock("https://api.github.com")
+      .patch(
+        `/repos/${repo_owner}/${repo_name}/actions/variables/${
+          Object.keys(variables)[0]
+        }`,
+        (body) => {
+          expect(body.name).toBe(Object.keys(variables)[0]);
+          expect(body.value).toBe(Object.values(variables)[0]);
           return body;
         }
       )
       .reply(200);
   });
 
-  test("setSecretForRepo should retrieve public key", async () => {
-    await setSecretForRepo(
-      octokit,
-      "FOO",
-      secrets.FOO,
-      repo,
-      repoEnvironment,
-      true,
-      "actions"
-    );
-    expect(environmentPublicKeyMock.isDone()).toBeTruthy();
+  test("setVariableForRepo should not set variable with dry run", async () => {
+    try {
+      await setVariableForRepo(
+        octokit,
+        Object.keys(variables)[0],
+        Object.values(variables)[0],
+        repo,
+        "",
+        true
+      );
+
+      expect(createVariableMock.isDone()).toBeFalsy();
+      expect(updateVariableMock.isDone()).toBeFalsy();
+    } catch (error) {
+      // Catch any errors from misconfigure nock mocks
+      console.log(error);
+      throw error;
+    }
   });
 
-  test("setSecretForRepo should not set secret with dry run", async () => {
-    await setSecretForRepo(
-      octokit,
-      "FOO",
-      secrets.FOO,
-      repo,
-      repoEnvironment,
-      true,
-      "actions"
-    );
-    expect(environmentPublicKeyMock.isDone()).toBeTruthy();
-    expect(setEnvironmentSecretMock.isDone()).toBeFalsy();
+  test("setVariableForRepo should call update variable endpoint", async () => {
+    try {
+      const [repo_owner, repo_name] = repo.full_name.split("/");
+
+      nock("https://api.github.com")
+        .log(console.log)
+        .get(
+          `/repos/${repo_owner}/${repo_name}/actions/variables/${
+            Object.keys(variables)[0]
+          }`
+        )
+        .reply(200);
+
+      console.log(
+        `/repos/${repo_owner}/${repo_name}/actions/variables/${
+          Object.keys(variables)[0]
+        }`
+      );
+
+      await setVariableForRepo(
+        octokit,
+        Object.keys(variables)[0],
+        Object.values(variables)[0],
+        repo,
+        "",
+        false
+      );
+
+      expect(createVariableMock.isDone()).toBeFalsy();
+      expect(updateVariableMock.isDone()).toBeTruthy();
+    } catch (error) {
+      // Catch any errors from misconfigure nock mocks
+      console.log(error);
+      throw error;
+    }
   });
 
-  test("setSecretForRepo should not set secret with Dependabot target", async () => {
-    await setSecretForRepo(
-      octokit,
-      "FOO",
-      secrets.FOO,
-      repo,
-      repoEnvironment,
-      true,
-      "dependabot"
-    );
-    expect(environmentPublicKeyMock.isDone()).toBeTruthy();
-    expect(setEnvironmentSecretMock.isDone()).toBeFalsy();
-  });
+  test("setVariableForRepo should call create variable endpoint", async () => {
+    try {
+      const [repo_owner, repo_name] = repo.full_name.split("/");
 
-  test("setSecretForRepo should call set secret endpoint", async () => {
-    await setSecretForRepo(
-      octokit,
-      "FOO",
-      secrets.FOO,
-      repo,
-      repoEnvironment,
-      false,
-      "actions"
-    );
-    expect(nock.isDone()).toBeTruthy();
+      nock("https://api.github.com")
+        .log(console.log)
+        .get(
+          `/repos/${repo_owner}/${repo_name}/actions/variables/${
+            Object.keys(variables)[0]
+          }`
+        )
+        .reply(404);
+
+      await setVariableForRepo(
+        octokit,
+        Object.keys(variables)[0],
+        Object.values(variables)[0],
+        repo,
+        "",
+        false
+      );
+
+      expect(createVariableMock.isDone()).toBeTruthy();
+      expect(updateVariableMock.isDone()).toBeFalsy();
+    } catch (error) {
+      // Catch any errors from misconfigure nock mocks
+      console.log(error);
+      throw error;
+    }
   });
 });
 
-describe("deleteSecretForRepo", () => {
+describe("setVariableForRepo with environment", () => {
+  const repo = fixture[0].response;
+
+  jest.setTimeout(30000);
+
+  const variables = { FOO: "BAR" };
+
+  const repoEnvironment = "production";
+
+  let createEnvironmentVariableMock: nock.Scope;
+  let updateEnvironmentVariableMock: nock.Scope;
+
+  beforeEach(() => {
+    nock.cleanAll();
+
+    createEnvironmentVariableMock = nock("https://api.github.com")
+      .post(
+        `/repositories/${repo.id}/environments/${repoEnvironment}/variables/${
+          Object.keys(variables)[0]
+        }`,
+        (body) => {
+          expect(body.name).toBe(Object.keys(variables)[0]);
+          expect(body.value).toBe(Object.values(variables)[0]);
+          return body;
+        }
+      )
+      .reply(200);
+
+    updateEnvironmentVariableMock = nock("https://api.github.com")
+      .patch(
+        `/repositories/${repo.id}/environments/${repoEnvironment}/variables/${
+          Object.keys(variables)[0]
+        }`,
+        (body) => {
+          expect(body.name).toBe(Object.keys(variables)[0]);
+          expect(body.value).toBe(Object.values(variables)[0]);
+          return body;
+        }
+      )
+      .reply(200);
+  });
+
+  test("setVariableForRepo should not set variable with dry run", async () => {
+    try {
+      await setVariableForRepo(
+        octokit,
+        "FOO",
+        variables.FOO,
+        repo,
+        repoEnvironment,
+        true
+      );
+
+      expect(createEnvironmentVariableMock.isDone()).toBeFalsy();
+      expect(updateEnvironmentVariableMock.isDone()).toBeFalsy();
+    } catch (error) {
+      // Catch any errors from misconfigure nock mocks
+      console.log(error);
+      throw error;
+    }
+  });
+
+  test("setVariableForRepo should call create variable endpoint", async () => {
+    try {
+      nock("https://api.github.com")
+        .get(
+          `/repositories/${repo.id}/environments/${repoEnvironment}/variables/${
+            Object.keys(variables)[0]
+          }`
+        )
+        .reply(404);
+
+      await setVariableForRepo(
+        octokit,
+        "FOO",
+        variables.FOO,
+        repo,
+        repoEnvironment,
+        false
+      );
+
+      expect(createEnvironmentVariableMock.isDone()).toBeTruthy();
+      expect(updateEnvironmentVariableMock.isDone()).toBeFalsy();
+    } catch (error) {
+      // Catch any errors from misconfigure nock mocks
+      console.log(error);
+      throw error;
+    }
+  });
+
+  test("setVariableForRepo should call update variable endpoint", async () => {
+    try {
+      nock("https://api.github.com")
+        .get(
+          `/repositories/${repo.id}/environments/${repoEnvironment}/variables/${
+            Object.keys(variables)[0]
+          }`
+        )
+        .reply(200);
+
+      await setVariableForRepo(
+        octokit,
+        "FOO",
+        variables.FOO,
+        repo,
+        repoEnvironment,
+        false
+      );
+
+      expect(createEnvironmentVariableMock.isDone()).toBeFalsy();
+      expect(updateEnvironmentVariableMock.isDone()).toBeTruthy();
+    } catch (error) {
+      // Catch any errors from misconfigure nock mocks
+      console.log(error);
+      throw error;
+    }
+  });
+});
+
+describe("deleteVariableForRepo", () => {
   const repo = fixture[0].response;
 
   jest.setTimeout(30000);
 
   const secrets = { FOO: "BAR" };
-  let deleteActionsSecretMock: nock.Scope;
-  let deleteDependabotSecretMock: nock.Scope;
+  let deleteActionsVariableMock: nock.Scope;
 
   beforeEach(() => {
     nock.cleanAll();
 
-    deleteActionsSecretMock = nock("https://api.github.com")
-      .delete(`/repos/${repo.full_name}/actions/secrets/FOO`)
-      .reply(200);
-
-    deleteDependabotSecretMock = nock("https://api.github.com")
-      .delete(`/repos/${repo.full_name}/dependabot/secrets/FOO`)
+    deleteActionsVariableMock = nock("https://api.github.com")
+      .delete(`/repos/${repo.full_name}/actions/variables/FOO`)
       .reply(200);
   });
 
-  test("deleteSecretForRepo should not delete secret with dry run", async () => {
-    await deleteSecretForRepo(
-      octokit,
-      "FOO",
-      secrets.FOO,
-      repo,
-      "",
-      true,
-      "actions"
-    );
-    expect(deleteActionsSecretMock.isDone()).toBeFalsy();
+  test("deleteVariableForRepo should not delete variable with dry run", async () => {
+    try {
+      await deleteVariableForRepo(octokit, "FOO", repo, "", true);
+      expect(deleteActionsVariableMock.isDone()).toBeFalsy();
+    } catch (error) {
+      // Catch any errors from misconfigure nock mocks
+      console.log(error);
+      throw error;
+    }
   });
 
-  test("deleteSecretForRepo with Actions target should call set secret endpoint for Actions", async () => {
-    await deleteSecretForRepo(
-      octokit,
-      "FOO",
-      secrets.FOO,
-      repo,
-      "",
-      false,
-      "actions"
-    );
-    expect(deleteActionsSecretMock.isDone()).toBeTruthy();
-  });
-
-  test("deleteSecretForRepo with Dependabot target should call set secret endpoint for Dependabot", async () => {
-    await deleteSecretForRepo(
-      octokit,
-      "FOO",
-      secrets.FOO,
-      repo,
-      "",
-      false,
-      "dependabot"
-    );
-    expect(deleteDependabotSecretMock.isDone()).toBeTruthy();
+  test("deleteVariableForRepo with should call delete variable endpoint", async () => {
+    try {
+      await deleteVariableForRepo(octokit, "FOO", repo, "", false);
+      expect(deleteActionsVariableMock.isDone()).toBeTruthy();
+    } catch (error) {
+      // Catch any errors from misconfigure nock mocks
+      console.log(error);
+      throw error;
+    }
   });
 });
 
-describe("deleteSecretForRepo with environment", () => {
+describe("deleteVariableForRepo with environment", () => {
   const repo = fixture[0].response;
 
   const repoEnvironment = "production";
@@ -397,53 +433,36 @@ describe("deleteSecretForRepo with environment", () => {
   jest.setTimeout(30000);
 
   const secrets = { FOO: "BAR" };
-  let deleteSecretMock: nock.Scope;
+  let deleteVariableMock: nock.Scope;
 
   beforeEach(() => {
     nock.cleanAll();
-    deleteSecretMock = nock("https://api.github.com")
+    deleteVariableMock = nock("https://api.github.com")
       .delete(
-        `/repositories/${repo.id}/environments/${repoEnvironment}/secrets/FOO`
+        `/repositories/${repo.id}/environments/${repoEnvironment}/variables/FOO`
       )
       .reply(200);
   });
 
-  test("deleteSecretForRepo should not delete secret with dry run", async () => {
-    await deleteSecretForRepo(
-      octokit,
-      "FOO",
-      secrets.FOO,
-      repo,
-      repoEnvironment,
-      true,
-      "actions"
-    );
-    expect(deleteSecretMock.isDone()).toBeFalsy();
+  test("deleteVariableForRepo should not delete variable with dry run", async () => {
+    try {
+      await deleteVariableForRepo(octokit, "FOO", repo, repoEnvironment, true);
+      expect(deleteVariableMock.isDone()).toBeFalsy();
+    } catch (error) {
+      // Catch any errors from misconfigure nock mocks
+      console.log(error);
+      throw error;
+    }
   });
 
-  test("deleteSecretForRepo should not delete secret with Dependabot target", async () => {
-    await deleteSecretForRepo(
-      octokit,
-      "FOO",
-      secrets.FOO,
-      repo,
-      repoEnvironment,
-      true,
-      "dependabot"
-    );
-    expect(deleteSecretMock.isDone()).toBeFalsy();
-  });
-
-  test("deleteSecretForRepo with Actions target should call set secret endpoint for Actions", async () => {
-    await deleteSecretForRepo(
-      octokit,
-      "FOO",
-      secrets.FOO,
-      repo,
-      repoEnvironment,
-      false,
-      "actions"
-    );
-    expect(nock.isDone()).toBeTruthy();
+  test("deleteVariableForRepo should call delete variable endpoint", async () => {
+    try {
+      await deleteVariableForRepo(octokit, "FOO", repo, repoEnvironment, false);
+      expect(nock.isDone()).toBeTruthy();
+    } catch (error) {
+      // Catch any errors from misconfigure nock mocks
+      console.log(error);
+      throw error;
+    }
   });
 });
