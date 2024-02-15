@@ -112,4 +112,3 @@ test("run should succeed with delete enabled, a repo and variable with repositor
   expect(github.deleteVariableForRepo as jest.Mock).toBeCalledTimes(1);
   expect(process.exitCode).toBe(undefined);
 });
-
