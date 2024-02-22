@@ -1,6 +1,6 @@
 # action.yml
-name: "Secrets Sync Action"
-author: Justin Poehnelt
+name: "Varibles Sync Action"
+author: Chad Oftedahl
 branding:
   icon: 'copy'  
   color: 'red'
