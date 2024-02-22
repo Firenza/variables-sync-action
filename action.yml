@@ -30,7 +30,7 @@ inputs:
       it is false, it is expected that `REPOSITORIES` will be an a new line
       deliminated list in the form of org/name.
     required: false
-  secrets:
+  variables:
     description: |
       New line deliminated regex expressions to select values from `process.env`. 
       Use the action env to pass secrets from the repository in which this action 
