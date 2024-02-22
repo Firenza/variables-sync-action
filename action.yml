@@ -4,7 +4,7 @@ author: Chad Oftedahl
 branding:
   icon: 'copy'  
   color: 'red'
-description: "Copies varoab;es from the action's environment to many other repos."
+description: "Copies variables from the action's environment to many other repos."
 inputs:
   github_token:
     description: "Token to use to get repos and write variables"
