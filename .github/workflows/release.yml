@@ -26,19 +26,32 @@ jobs:
       with:
         ref: master
         
-    - name: Test Action
+    - name: Test Action Dry Run
       uses: ./
       with: 
         VARIABLES: |
           ^FOO$
-          ^GITHUB_.*
+          ^BAR$
         REPOSITORIES: |
           ^Firenza/verify-secrets$
         DRY_RUN: true
         GITHUB_TOKEN: ${{ secrets.GH_TOKEN_NO_SCOPES }}
       env:
         FOO: ${{github.run_id}}
-        FOOBAR: BAZ
+        BAR: ${{github.run_number}}
+
+    - name: Test Action
+      uses: ./
+      with: 
+        VARIABLES: |
+          ^FOO$
+          ^BAR$
+        REPOSITORIES: |
+          ^Firenza/verify-secrets$
+        GITHUB_TOKEN: ${{ secrets.GH_TOKEN_VERIFY_SECRETS_VARIBLE_MUTATE }}
+      env:
+        FOO: ${{github.run_id}}
+        BAR: ${{github.run_number}}
 
     - name: Checkout
       uses: actions/checkout@v3
