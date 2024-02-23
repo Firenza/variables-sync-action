@@ -242,14 +242,13 @@ function setVariableForRepo(octokit, name, variable, repo, environment, dry_run)
                         throw error;
                     }
                 }
-                let httpMethod = null;
+                let updateOrCreateEnvVariableMethodAndUrl = null;
                 if (variableExists) {
-                    httpMethod = "PATCH";
+                    updateOrCreateEnvVariableMethodAndUrl = `PATCH /repositories/${repo.id}/environments/${environment}/variables/${name}`;
                 }
                 else {
-                    httpMethod = "POST";
+                    updateOrCreateEnvVariableMethodAndUrl = `POST /repositories/${repo.id}/environments/${environment}/variables`;
                 }
-                const updateOrCreateEnvVariableMethodAndUrl = `${httpMethod} /repositories/${repo.id}/environments/${environment}/variables/${name}`;
                 core.debug(updateOrCreateEnvVariableMethodAndUrl);
                 yield octokit.request(updateOrCreateEnvVariableMethodAndUrl, {
                     data: JSON.stringify({
@@ -275,14 +274,13 @@ function setVariableForRepo(octokit, name, variable, repo, environment, dry_run)
                         throw error;
                     }
                 }
-                let httpMethod = null;
+                let updateOrCreateRepoVariableMethodAndUrl = null;
                 if (variableExists) {
-                    httpMethod = "PATCH";
+                    updateOrCreateRepoVariableMethodAndUrl = `PATCH /repos/${repo_owner}/${repo_name}/actions/variables/${name}`;
                 }
                 else {
-                    httpMethod = "POST";
+                    updateOrCreateRepoVariableMethodAndUrl = `POST /repos/${repo_owner}/${repo_name}/actions/variables`;
                 }
-                const updateOrCreateRepoVariableMethodAndUrl = `${httpMethod} /repos/${repo_owner}/${repo_name}/actions/variables/${name}`;
                 core.debug(updateOrCreateRepoVariableMethodAndUrl);
                 yield octokit.request(updateOrCreateRepoVariableMethodAndUrl, {
                     data: JSON.stringify({

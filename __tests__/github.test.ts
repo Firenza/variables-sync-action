@@ -152,10 +152,7 @@ describe("setVariableForRepo", () => {
     nock.cleanAll();
 
     createVariableMock = nock("https://api.github.com")
-      .post(
-        `/repos/${repo_owner}/${repo_name}/actions/variables/${
-          Object.keys(variables)[0]
-        }`,
+      .post(`/repos/${repo_owner}/${repo_name}/actions/variables`,
         (body) => {
           expect(body.name).toBe(Object.keys(variables)[0]);
           expect(body.value).toBe(Object.values(variables)[0]);
@@ -283,10 +280,7 @@ describe("setVariableForRepo with environment", () => {
     nock.cleanAll();
 
     createEnvironmentVariableMock = nock("https://api.github.com")
-      .post(
-        `/repositories/${repo.id}/environments/${repoEnvironment}/variables/${
-          Object.keys(variables)[0]
-        }`,
+      .post(`/repositories/${repo.id}/environments/${repoEnvironment}/variables`,
         (body) => {
           expect(body.name).toBe(Object.keys(variables)[0]);
           expect(body.value).toBe(Object.values(variables)[0]);
