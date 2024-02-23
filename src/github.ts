@@ -169,17 +169,19 @@ export async function setVariableForRepo(
 ): Promise<void> {
   const [repo_owner, repo_name] = repo.full_name.split("/");
 
-  core.info(`Set \`${name} = ${variable} on ${repo.full_name}`);
+  core.info(`Set \`${name} = ${variable}\` on ${repo.full_name}`);
+  
 
   if (!dry_run) {
     if (environment) {
       // Check to see if the variable already exists
       let variableExists = true;
       try {
-        await octokit.request(
-          `GET /repositories/${repo.id}/environments/${environment}/variables/${name}`
-        );
+        const environmentVariableReadMethodAndUrl = `GET /repositories/${repo.id}/environments/${environment}/variables/${name}`
+        core.debug(environmentVariableReadMethodAndUrl);
+        await octokit.request(environmentVariableReadMethodAndUrl);
       } catch (error: any) {
+        core.debug(JSON.stringify(error));
         if (error.status === 404) {
           variableExists = false;
         } else {
@@ -194,8 +196,11 @@ export async function setVariableForRepo(
         httpMethod = "POST";
       }
 
-      await octokit.request(
-        `${httpMethod} /repositories/${repo.id}/environments/${environment}/variables/${name}`,
+      const updateOrCreateEnvVariableMethodAndUrl = `${httpMethod} /repositories/${repo.id}/environments/${environment}/variables/${name}`;
+
+      core.debug(updateOrCreateEnvVariableMethodAndUrl);
+
+      await octokit.request(updateOrCreateEnvVariableMethodAndUrl,
         {
           data: JSON.stringify({
             name,
@@ -208,10 +213,11 @@ export async function setVariableForRepo(
       let variableExists = true;
 
       try {
-        await octokit.request(
-          `GET /repos/${repo_owner}/${repo_name}/actions/variables/${name}`
-        );
+        const repositoryVariableReadMethodAndUrl = `GET /repos/${repo_owner}/${repo_name}/actions/variables/${name}`
+        core.debug(repositoryVariableReadMethodAndUrl);
+        await octokit.request(repositoryVariableReadMethodAndUrl);
       } catch (error: any) {
+        core.debug(JSON.stringify(error));
         if (error.status === 404) {
           variableExists = false;
         } else {
@@ -227,8 +233,11 @@ export async function setVariableForRepo(
         httpMethod = "POST";
       }
 
-      await octokit.request(
-        `${httpMethod} /repos/${repo_owner}/${repo_name}/actions/variables/${name}`,
+      const updateOrCreateRepoVariableMethodAndUrl = `${httpMethod} /repos/${repo_owner}/${repo_name}/actions/variables/${name}`;
+
+      core.debug(updateOrCreateRepoVariableMethodAndUrl);
+
+      await octokit.request(updateOrCreateRepoVariableMethodAndUrl,
         {
           data: JSON.stringify({
             name,
