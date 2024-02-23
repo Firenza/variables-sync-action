@@ -142,27 +142,27 @@ jobs:
       uses: ./
       with: 
         VARIABLES: |
-          ^FOO$
-          ^BAR$
+          ^ENV_FOO$
+          ^ENV_BAR$
         REPOSITORIES: |
           ^Firenza/verify-secrets$
         DRY_RUN: true
         GITHUB_TOKEN: ${{ secrets.GH_TOKEN_NO_SCOPES }}
         ENVIRONMENT: 'test'
       env:
-        FOO: ${{github.run_id}}
-        BAR: ${{github.run_number}}
+        ENV_FOO: ${{github.run_id}}
+        ENV_BAR: ${{github.run_number}}
     
     - name: Test Action Environment Var
       uses: ./
       with: 
         VARIABLES: |
-          ^FOO$
-          ^BAR$
+          ^ENV_FOO$
+          ^ENV_BAR$
         REPOSITORIES: |
           ^Firenza/verify-secrets$
         GITHUB_TOKEN: ${{ secrets.GH_TOKEN_VERIFY_SECRETS_VARIBLE_MUTATE }}
         ENVIRONMENT: 'test'
       env:
-        FOO: ${{github.run_id}}
-        BAR: ${{github.run_number}}
+        ENV_FOO: ${{github.run_id}}
+        ENV_BAR: ${{github.run_number}}
