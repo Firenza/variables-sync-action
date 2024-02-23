@@ -223,15 +223,18 @@ exports.filterReposByPatterns = filterReposByPatterns;
 function setVariableForRepo(octokit, name, variable, repo, environment, dry_run) {
     return __awaiter(this, void 0, void 0, function* () {
         const [repo_owner, repo_name] = repo.full_name.split("/");
-        core.info(`Set \`${name} = ${variable} on ${repo.full_name}`);
+        core.info(`Set \`${name} = ${variable}\` on ${repo.full_name}`);
         if (!dry_run) {
             if (environment) {
                 // Check to see if the variable already exists
                 let variableExists = true;
                 try {
-                    yield octokit.request(`GET /repositories/${repo.id}/environments/${environment}/variables/${name}`);
+                    const environmentVariableReadMethodAndUrl = `GET /repositories/${repo.id}/environments/${environment}/variables/${name}`;
+                    core.debug(environmentVariableReadMethodAndUrl);
+                    yield octokit.request(environmentVariableReadMethodAndUrl);
                 }
                 catch (error) {
+                    core.debug(JSON.stringify(error));
                     if (error.status === 404) {
                         variableExists = false;
                     }
@@ -239,14 +242,15 @@ function setVariableForRepo(octokit, name, variable, repo, environment, dry_run)
                         throw error;
                     }
                 }
-                let httpMethod = null;
+                let updateOrCreateEnvVariableMethodAndUrl = null;
                 if (variableExists) {
-                    httpMethod = "PATCH";
+                    updateOrCreateEnvVariableMethodAndUrl = `PATCH /repositories/${repo.id}/environments/${environment}/variables/${name}`;
                 }
                 else {
-                    httpMethod = "POST";
+                    updateOrCreateEnvVariableMethodAndUrl = `POST /repositories/${repo.id}/environments/${environment}/variables`;
                 }
-                yield octokit.request(`${httpMethod} /repositories/${repo.id}/environments/${environment}/variables/${name}`, {
+                core.debug(updateOrCreateEnvVariableMethodAndUrl);
+                yield octokit.request(updateOrCreateEnvVariableMethodAndUrl, {
                     data: JSON.stringify({
                         name,
                         value: variable,
@@ -257,9 +261,12 @@ function setVariableForRepo(octokit, name, variable, repo, environment, dry_run)
                 // Check to see if the variable already exists
                 let variableExists = true;
                 try {
-                    yield octokit.request(`GET /repos/${repo_owner}/${repo_name}/actions/variables/${name}`);
+                    const repositoryVariableReadMethodAndUrl = `GET /repos/${repo_owner}/${repo_name}/actions/variables/${name}`;
+                    core.debug(repositoryVariableReadMethodAndUrl);
+                    yield octokit.request(repositoryVariableReadMethodAndUrl);
                 }
                 catch (error) {
+                    core.debug(JSON.stringify(error));
                     if (error.status === 404) {
                         variableExists = false;
                     }
@@ -267,14 +274,15 @@ function setVariableForRepo(octokit, name, variable, repo, environment, dry_run)
                         throw error;
                     }
                 }
-                let httpMethod = null;
+                let updateOrCreateRepoVariableMethodAndUrl = null;
                 if (variableExists) {
-                    httpMethod = "PATCH";
+                    updateOrCreateRepoVariableMethodAndUrl = `PATCH /repos/${repo_owner}/${repo_name}/actions/variables/${name}`;
                 }
                 else {
-                    httpMethod = "POST";
+                    updateOrCreateRepoVariableMethodAndUrl = `POST /repos/${repo_owner}/${repo_name}/actions/variables`;
                 }
-                yield octokit.request(`${httpMethod} /repos/${repo_owner}/${repo_name}/actions/variables/${name}`, {
+                core.debug(updateOrCreateRepoVariableMethodAndUrl);
+                yield octokit.request(updateOrCreateRepoVariableMethodAndUrl, {
                     data: JSON.stringify({
                         name,
                         value: variable,

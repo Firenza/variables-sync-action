@@ -1,12 +1,168 @@
 name: "Build"
 on: 
-  [push, pull_request]
+  [pull_request]
 jobs:
   build:
     runs-on: ubuntu-latest
     steps:
-    - uses: actions/checkout@v3
 
-    - run: |
-        npm ci
-        npm run all
+    - name: Checkout
+      id: checkout
+      uses: actions/checkout@v4
+
+    - name: Install Dependencies
+      run: npm ci
+
+    - name: Build
+      run: npm run build
+
+  unit-test:
+    runs-on: ubuntu-latest
+    steps:
+
+    - name: Checkout
+      id: checkout
+      uses: actions/checkout@v4
+
+    - name: Install Dependencies
+      run: npm ci
+
+    - name: Run unit tests
+      run: npm run test
+
+  format-check:
+    runs-on: ubuntu-latest
+    steps:
+
+    - name: Checkout
+      id: checkout
+      uses: actions/checkout@v4
+
+    - name: Install Dependencies
+      run: npm ci
+
+    - name: Run unit tests
+      run: npm run format-check
+
+  lint:
+    runs-on: ubuntu-latest
+    steps:
+
+    - name: Checkout
+      id: checkout
+      uses: actions/checkout@v4
+
+    - name: Install Dependencies
+      run: npm ci
+
+    - name: Run unit tests
+      run: npm run lint
+
+  check-dist:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Install Dependencies
+        run: npm ci
+
+      - name: Build
+        run: npm run build
+
+      - name: Build dist Directory
+        run: npm run pack
+
+      # This will fail the workflow if the PR wasn't created by Dependabot.
+      - name: Compare Directories
+        id: diff
+        run: |
+          if [ "$(git diff --ignore-space-at-eol --text dist/ | wc -l)" -gt "0" ]; then
+            echo "Detected uncommitted changes after build. See status below:"
+            git diff --ignore-space-at-eol --text dist/
+            exit 1
+          fi
+
+      # If `dist/` was different than expected, and this was not a Dependabot
+      # PR, upload the expected version as a workflow artifact.
+      - if: ${{ failure() && steps.diff.outcome == 'failure' }}
+        name: Upload Artifact
+        id: upload
+        uses: actions/upload-artifact@v4
+        with:
+          name: dist
+          path: dist/
+
+  test:
+    runs-on: ubuntu-latest
+    steps:
+
+    - name: Checkout
+      id: checkout
+      uses: actions/checkout@v4
+
+    - name: Install Dependencies
+      run: npm ci
+
+    - name: Build
+      run: npm run build
+
+    - name: Build dist Directory
+      run: npm run pack
+
+    - name: Test Action Dry Run Repo Var
+      uses: ./
+      with: 
+        VARIABLES: |
+          ^FOO$
+          ^BAR$
+        REPOSITORIES: |
+          ^Firenza/verify-secrets$
+        DRY_RUN: true
+        GITHUB_TOKEN: ${{ secrets.GH_TOKEN_NO_SCOPES }}
+      env:
+        FOO: ${{github.run_id}}
+        BAR: ${{github.run_number}}
+    
+    - name: Test Action Repo Var
+      uses: ./
+      with: 
+        VARIABLES: |
+          ^FOO$
+          ^BAR$
+        REPOSITORIES: |
+          ^Firenza/verify-secrets$
+        GITHUB_TOKEN: ${{ secrets.GH_TOKEN_VERIFY_SECRETS_VARIBLE_MUTATE }}
+      env:
+        FOO: ${{github.run_id}}
+        BAR: ${{github.run_number}}
+    
+    - name: Test Action Dry Run Environment Var
+      uses: ./
+      with: 
+        VARIABLES: |
+          ^ENV_FOO$
+          ^ENV_BAR$
+        REPOSITORIES: |
+          ^Firenza/verify-secrets$
+        DRY_RUN: true
+        GITHUB_TOKEN: ${{ secrets.GH_TOKEN_NO_SCOPES }}
+        ENVIRONMENT: 'test'
+      env:
+        ENV_FOO: ${{github.run_id}}
+        ENV_BAR: ${{github.run_number}}
+    
+    - name: Test Action Environment Var
+      uses: ./
+      with: 
+        VARIABLES: |
+          ^ENV_FOO$
+          ^ENV_BAR$
+        REPOSITORIES: |
+          ^Firenza/verify-secrets$
+        GITHUB_TOKEN: ${{ secrets.GH_TOKEN_VERIFY_SECRETS_VARIBLE_MUTATE }}
+        ENVIRONMENT: 'test'
+      env:
+        ENV_FOO: ${{github.run_id}}
+        ENV_BAR: ${{github.run_number}}
