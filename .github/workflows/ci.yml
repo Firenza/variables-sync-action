@@ -111,7 +111,7 @@ jobs:
     - name: Build dist Directory
       run: npm run pack
 
-    - name: Test Action Dry Run
+    - name: Test Action Dry Run Repo Var
       uses: ./
       with: 
         VARIABLES: |
@@ -125,7 +125,7 @@ jobs:
         FOO: ${{github.run_id}}
         BAR: ${{github.run_number}}
     
-    - name: Test Action
+    - name: Test Action Repo Var
       uses: ./
       with: 
         VARIABLES: |
@@ -134,6 +134,35 @@ jobs:
         REPOSITORIES: |
           ^Firenza/verify-secrets$
         GITHUB_TOKEN: ${{ secrets.GH_TOKEN_VERIFY_SECRETS_VARIBLE_MUTATE }}
+      env:
+        FOO: ${{github.run_id}}
+        BAR: ${{github.run_number}}
+    
+    - name: Test Action Dry Run Environment Var
+      uses: ./
+      with: 
+        VARIABLES: |
+          ^FOO$
+          ^BAR$
+        REPOSITORIES: |
+          ^Firenza/verify-secrets$
+        DRY_RUN: true
+        GITHUB_TOKEN: ${{ secrets.GH_TOKEN_NO_SCOPES }}
+        ENVIRONMENT: 'test'
+      env:
+        FOO: ${{github.run_id}}
+        BAR: ${{github.run_number}}
+    
+    - name: Test Action Environment Var
+      uses: ./
+      with: 
+        VARIABLES: |
+          ^FOO$
+          ^BAR$
+        REPOSITORIES: |
+          ^Firenza/verify-secrets$
+        GITHUB_TOKEN: ${{ secrets.GH_TOKEN_VERIFY_SECRETS_VARIBLE_MUTATE }}
+        ENVIRONMENT: 'test'
       env:
         FOO: ${{github.run_id}}
         BAR: ${{github.run_number}}
