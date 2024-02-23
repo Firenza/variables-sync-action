@@ -170,14 +170,13 @@ export async function setVariableForRepo(
   const [repo_owner, repo_name] = repo.full_name.split("/");
 
   core.info(`Set \`${name} = ${variable}\` on ${repo.full_name}`);
-  
 
   if (!dry_run) {
     if (environment) {
       // Check to see if the variable already exists
       let variableExists = true;
       try {
-        const environmentVariableReadMethodAndUrl = `GET /repositories/${repo.id}/environments/${environment}/variables/${name}`
+        const environmentVariableReadMethodAndUrl = `GET /repositories/${repo.id}/environments/${environment}/variables/${name}`;
         core.debug(environmentVariableReadMethodAndUrl);
         await octokit.request(environmentVariableReadMethodAndUrl);
       } catch (error: any) {
@@ -200,20 +199,18 @@ export async function setVariableForRepo(
 
       core.debug(updateOrCreateEnvVariableMethodAndUrl);
 
-      await octokit.request(updateOrCreateEnvVariableMethodAndUrl,
-        {
-          data: JSON.stringify({
-            name,
-            value: variable,
-          }),
-        }
-      );
+      await octokit.request(updateOrCreateEnvVariableMethodAndUrl, {
+        data: JSON.stringify({
+          name,
+          value: variable,
+        }),
+      });
     } else {
       // Check to see if the variable already exists
       let variableExists = true;
 
       try {
-        const repositoryVariableReadMethodAndUrl = `GET /repos/${repo_owner}/${repo_name}/actions/variables/${name}`
+        const repositoryVariableReadMethodAndUrl = `GET /repos/${repo_owner}/${repo_name}/actions/variables/${name}`;
         core.debug(repositoryVariableReadMethodAndUrl);
         await octokit.request(repositoryVariableReadMethodAndUrl);
       } catch (error: any) {
@@ -237,14 +234,12 @@ export async function setVariableForRepo(
 
       core.debug(updateOrCreateRepoVariableMethodAndUrl);
 
-      await octokit.request(updateOrCreateRepoVariableMethodAndUrl,
-        {
-          data: JSON.stringify({
-            name,
-            value: variable,
-          }),
-        }
-      );
+      await octokit.request(updateOrCreateRepoVariableMethodAndUrl, {
+        data: JSON.stringify({
+          name,
+          value: variable,
+        }),
+      });
     }
   }
 }
