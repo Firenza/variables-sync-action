@@ -68,7 +68,10 @@ jobs:
       - name: Install Dependencies
         run: npm ci
 
-      - name: Build dist/ Directory
+      - name: Build
+        run: npm run build
+
+      - name: Build dist Directory
         run: npm run pack
 
       # This will fail the workflow if the PR wasn't created by Dependabot.
