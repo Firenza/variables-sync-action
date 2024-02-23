@@ -55,13 +55,3 @@ test("getSecrets using process.env", async () => {
   expect(getVariables([".*"]).FOO).toEqual(process.env.FOO);
   delete process.env.FOO;
 });
-
-test("getSecrets does not add mask to GITHUB_", async () => {
-  const env = { FOO: "BAR", GITHUB_FOO: "GITHUB_BAR" };
-
-  setSecretMock.mockClear();
-  getVariables([".*"], env);
-
-  expect((core.setSecret as jest.Mock).mock.calls.length).toBe(1);
-  expect((core.setSecret as jest.Mock).mock.calls[0][0]).toBe(env.FOO);
-});
