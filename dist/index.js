@@ -493,10 +493,6 @@ function getVariables(patterns, env = process.env) {
         return env[k] && regexPatterns.filter((r) => r.test(k)).length;
     })
         .reduce((o, k) => {
-        // tell Github to mask this from logs
-        if (!k.match(/GITHUB_.*/)) {
-            core.setSecret(env[k]);
-        }
         o[k] = env[k];
         return o;
     }, {});
