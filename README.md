@@ -57,16 +57,16 @@ uses: Firenza/variables-sync-action@[insert version or commit]
   with:
     VARIABLES: |
       ^FOO$
-      ^GITHUB_.*
+      ^FOOBAR$
     REPOSITORIES: |
       ${{github.repository}}
-    DRY_RUN: true
+    DRY_RUN: false
     GITHUB_TOKEN: ${{ secrets.PERSONAL_GITHUB_TOKEN_CLASSIC }}
     GITHUB_API_URL: ${{ secrets.CUSTOM_GITHUB_API_URL }}
     CONCURRENCY: 10
   env:
-    FOO: ${{github.run_id}}
-    FOOBAR: BAZ
+    FOO: FOO_VALUE
+    FOOBAR: FOOVAR_VALUE
 ```
 
 See the workflows in this repository for another example.

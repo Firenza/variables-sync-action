@@ -94,7 +94,7 @@ jobs:
           name: dist
           path: dist/
 
-  test:
+  action-tests:
     runs-on: ubuntu-latest
     steps:
 
