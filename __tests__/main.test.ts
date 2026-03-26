@@ -52,7 +52,7 @@ test("run should succeed with a repo and variable", async () => {
   });
   await run();
 
-  expect(github.listAllMatchingRepos as jest.Mock).toBeCalledTimes(1);
+  expect(github.listAllMatchingRepos as jest.Mock).toHaveBeenCalledTimes(1);
   expect((github.setVariableForRepo as jest.Mock).mock.calls[0][3]).toEqual(
     fixture[0].response
   );
@@ -84,7 +84,7 @@ test("run should succeed with a repo and variable with repository_list_regex as 
   });
   await run();
 
-  expect(github.getRepos as jest.Mock).toBeCalledTimes(1);
+  expect(github.getRepos as jest.Mock).toHaveBeenCalledTimes(1);
   expect((github.setVariableForRepo as jest.Mock).mock.calls[0][3]).toEqual(
     fixture[0].response
   );
@@ -109,6 +109,6 @@ test("run should succeed with delete enabled, a repo and variable with repositor
   });
   await run();
 
-  expect(github.deleteVariableForRepo as jest.Mock).toBeCalledTimes(1);
+  expect(github.deleteVariableForRepo as jest.Mock).toHaveBeenCalledTimes(1);
   expect(process.exitCode).toBe(undefined);
 });

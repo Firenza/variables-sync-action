@@ -75,7 +75,7 @@ describe("getConfig", () => {
   });
 
   test("getConfig throws error on missing inputs", async () => {
-    expect(() => getConfig()).toThrowError();
+    expect(() => getConfig()).toThrow();
   });
 
   test("getConfig returns arrays for secrets and repositories", async () => {

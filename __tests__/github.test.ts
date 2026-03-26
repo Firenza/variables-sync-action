@@ -198,19 +198,12 @@ describe("setVariableForRepo", () => {
       const [repo_owner, repo_name] = repo.full_name.split("/");
 
       nock("https://api.github.com")
-        .log(console.log)
         .get(
           `/repos/${repo_owner}/${repo_name}/actions/variables/${
             Object.keys(variables)[0]
           }`
         )
         .reply(200);
-
-      console.log(
-        `/repos/${repo_owner}/${repo_name}/actions/variables/${
-          Object.keys(variables)[0]
-        }`
-      );
 
       await setVariableForRepo(
         octokit,
@@ -235,7 +228,6 @@ describe("setVariableForRepo", () => {
       const [repo_owner, repo_name] = repo.full_name.split("/");
 
       nock("https://api.github.com")
-        .log(console.log)
         .get(
           `/repos/${repo_owner}/${repo_name}/actions/variables/${
             Object.keys(variables)[0]

@@ -263,7 +263,7 @@ export async function deleteVariableForRepo(
         );
       }
     }
-  } catch (HttpError) {
+  } catch {
     //If secret is not found in target repo, silently continue
   }
 }
