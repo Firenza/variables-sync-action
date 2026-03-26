@@ -14,6 +14,7 @@
  * limitations under the License.
  */
 
+import { describe, test, expect, beforeEach, afterAll } from "vitest";
 import { getConfig } from "../src/config";
 
 function clearInputs() {

@@ -1,5 +1,4 @@
 import tseslint from "typescript-eslint";
-import jest from "eslint-plugin-jest";
 
 export default tseslint.config(
   {
@@ -17,9 +16,6 @@ export default tseslint.config(
         projectService: true,
         tsconfigRootDir: import.meta.dirname,
       },
-    },
-    plugins: {
-      jest,
     },
     rules: {
       "no-unused-vars": "off",
