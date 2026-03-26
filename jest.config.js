@@ -27,5 +27,6 @@ module.exports = {
   ],
   verbose: true,
   collectCoverage: true,
-  collectCoverageFrom: ["src/**/([a-zA-Z_]*).{js,ts}", "!**/*.test.{js,ts}"]
+  collectCoverageFrom: ["src/**/([a-zA-Z_]*).{js,ts}", "!**/*.test.{js,ts}"],
+  watchman: false
 };
