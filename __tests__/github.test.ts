@@ -14,7 +14,26 @@
  * limitations under the License.
  */
 
-import * as config from "../src/config";
+import {
+  vi,
+  describe,
+  test,
+  expect,
+  beforeAll,
+  beforeEach,
+  afterAll,
+} from "vitest";
+
+vi.mock("../src/config", () => ({
+  getConfig: vi.fn().mockReturnValue({
+    GITHUB_TOKEN: "token",
+    VARIABLES: ["BAZ"],
+    REPOSITORIES: [".*"],
+    REPOSITORIES_LIST_REGEX: true,
+    DRY_RUN: false,
+    RETRIES: 3,
+  }),
+}));
 
 import {
   DefaultOctokit,
@@ -33,14 +52,6 @@ let octokit: any;
 
 beforeAll(() => {
   nock.disableNetConnect();
-  (config.getConfig as jest.Mock) = jest.fn().mockReturnValue({
-    GITHUB_TOKEN: "token",
-    VARIABLES: ["BAZ"],
-    REPOSITORIES: [".*"],
-    REPOSITORIES_LIST_REGEX: true,
-    DRY_RUN: false,
-    RETRIES: 3,
-  });
 
   octokit = DefaultOctokit({
     auth: "",
@@ -141,8 +152,6 @@ describe("setVariableForRepo", () => {
   const repo = fixture[0].response;
   const [repo_owner, repo_name] = repo.full_name.split("/");
 
-  jest.setTimeout(30000);
-
   const variables = { FOO: "BAR" };
 
   let createVariableMock: nock.Scope;
@@ -198,19 +207,12 @@ describe("setVariableForRepo", () => {
       const [repo_owner, repo_name] = repo.full_name.split("/");
 
       nock("https://api.github.com")
-        .log(console.log)
         .get(
           `/repos/${repo_owner}/${repo_name}/actions/variables/${
             Object.keys(variables)[0]
           }`
         )
         .reply(200);
-
-      console.log(
-        `/repos/${repo_owner}/${repo_name}/actions/variables/${
-          Object.keys(variables)[0]
-        }`
-      );
 
       await setVariableForRepo(
         octokit,
@@ -235,7 +237,6 @@ describe("setVariableForRepo", () => {
       const [repo_owner, repo_name] = repo.full_name.split("/");
 
       nock("https://api.github.com")
-        .log(console.log)
         .get(
           `/repos/${repo_owner}/${repo_name}/actions/variables/${
             Object.keys(variables)[0]
@@ -264,8 +265,6 @@ describe("setVariableForRepo", () => {
 
 describe("setVariableForRepo with environment", () => {
   const repo = fixture[0].response;
-
-  jest.setTimeout(30000);
 
   const variables = { FOO: "BAR" };
 
@@ -382,8 +381,6 @@ describe("setVariableForRepo with environment", () => {
 describe("deleteVariableForRepo", () => {
   const repo = fixture[0].response;
 
-  jest.setTimeout(30000);
-
   const secrets = { FOO: "BAR" };
   let deleteActionsVariableMock: nock.Scope;
 
@@ -422,8 +419,6 @@ describe("deleteVariableForRepo with environment", () => {
   const repo = fixture[0].response;
 
   const repoEnvironment = "production";
-
-  jest.setTimeout(30000);
 
   const secrets = { FOO: "BAR" };
   let deleteVariableMock: nock.Scope;

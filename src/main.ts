@@ -93,7 +93,7 @@ export async function run(): Promise<void> {
       for (const k of Object.keys(variables)) {
         if (config.RUN_DELETE) {
           calls.push(
-            limit(() =>
+            limit(async () =>
               deleteVariableForRepo(
                 octokit,
                 k,
@@ -105,7 +105,7 @@ export async function run(): Promise<void> {
           );
         } else {
           calls.push(
-            limit(() =>
+            limit(async () =>
               setVariableForRepo(
                 octokit,
                 k,

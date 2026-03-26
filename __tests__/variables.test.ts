@@ -14,11 +14,12 @@
  * limitations under the License.
  */
 
+import { vi, test, expect, beforeAll } from "vitest";
 import * as core from "@actions/core";
 
 import { getVariables } from "../src/variables";
 
-const setSecretMock: jest.Mock = jest.fn();
+const setSecretMock = vi.fn();
 
 beforeAll(() => {
   // @ts-ignore-next-line
